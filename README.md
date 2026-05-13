@@ -35,10 +35,12 @@ payload semantics.
 
 ## Status
 
-`v0.1.0` — initial release. 15 unit tests cover roundtrip across payload
+`v0.1.0` — initial release. 21 unit tests cover roundtrip across payload
 sizes 0–1024, all error paths (truncation, version mismatch, CRC corruption,
-length mismatch, oversized payloads, undersized buffers), and a fixed
-byte-layout fixture so silent wire-format drift is impossible.
+length mismatch, oversized payloads, undersized buffers), a fixed
+byte-layout fixture so silent wire-format drift is impossible, and an
+adversarial fuzz suite covering bit-flip robustness, prefix truncation, and
+a 100k random-wire never-panic guarantee.
 
 Minimum Zig version: `0.15.0`. Tested on Zig `0.16.0`.
 
@@ -202,7 +204,7 @@ prefer to manage the upper bound yourself.
 zig build test
 ```
 
-15 tests covering:
+21 tests covering:
 
 - `packetLen` / `maxEncodedLen` size math
 - Empty-payload roundtrip
@@ -219,6 +221,19 @@ zig build test
 - Payload-length-field-mismatch detection
 - **Byte-fixture test** that pins the exact wire format — any future change
   to header layout will fail this test loudly.
+
+Adversarial fuzz testing (`src/fuzz_test.zig`) now covers bit-flip
+robustness, truncation, and random-wire never-panic guarantees:
+
+- **10,000 randomized full roundtrips** across all four frame fields
+- **Version rejection** at packet and wire level for `{0,2,3,5,100,200,255}`
+- **CRC single-bit corruption** sweep over every bit of canonical frames
+  (small / medium / max payload); reports CRC catch rate (~98% of payload-
+  region flips in the current build)
+- **Truncation robustness** across every wire prefix
+- **100,000 random-byte wires** — `decode` must never panic
+- **Payload-length-field tampering** — must return
+  `PayloadLengthMismatch` or `ChecksumMismatch`, never panic
 
 ## License
 

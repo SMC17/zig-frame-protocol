@@ -23,6 +23,21 @@ pub fn build(b: *std.Build) void {
     const test_step = b.step("test", "Run unit tests");
     test_step.dependOn(&run_tests.step);
 
+    // Adversarial fuzz / property tests — wired as a separate test module so
+    // they can `@import("frame_protocol")` and exercise the public API.
+    const fuzz_mod = b.createModule(.{
+        .root_source_file = b.path("src/fuzz_test.zig"),
+        .target = target,
+        .optimize = optimize,
+    });
+    fuzz_mod.addImport("frame_protocol", mod);
+    fuzz_mod.addImport("cobs", cobs.module("cobs"));
+    const fuzz_tests = b.addTest(.{
+        .root_module = fuzz_mod,
+    });
+    const run_fuzz_tests = b.addRunArtifact(fuzz_tests);
+    test_step.dependOn(&run_fuzz_tests.step);
+
     // Example
     const example_mod = b.createModule(.{
         .root_source_file = b.path("examples/echo.zig"),
