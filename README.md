@@ -229,3 +229,13 @@ MIT. See `LICENSE`.
 Issues and PRs welcome. Changes that alter the wire format are breaking and
 require a version bump. The fixture test in `src/root.zig` is the canonical
 specification of v1.
+
+## Part of the Sovereign Stack
+
+This is one of a set of small, composable Zig libraries.
+
+- [**zig-cobs**](https://github.com/SMC17/zig-cobs) — the underlying COBS framing this protocol uses
+- [**zig-graph**](https://github.com/SMC17/zig-graph) — sparse graph + spectral algorithms
+- [**zig-h3**](https://github.com/SMC17/zig-h3) — H3 v4 spatial index
+
+See [github.com/SMC17](https://github.com/SMC17) for the full portfolio.
