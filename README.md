@@ -1,0 +1,231 @@
+# zig-frame-protocol
+
+A small, versioned binary frame protocol for byte streams. Each frame carries
+a kind byte, a 32-bit sequence number, a 64-bit timestamp, a 16-bit payload
+length, the payload itself, and a CRC32 trailer — then is COBS-framed and
+delimited by a single `0x00` byte for unambiguous stream parsing.
+
+Built on top of [`zig-cobs`][zig-cobs]. Zero allocation, no dependencies
+beyond cobs, suitable for embedded targets and host-side stream processing.
+
+[zig-cobs]: https://example.invalid/zig-cobs
+
+## Wire format
+
+```text
+ offset  size  field
+ ------  ----  -----------------------------------------
+    0     1    version           (currently always 1)
+    1     1    kind              (caller-defined, 0–255)
+    2     4    sequence          (u32 little-endian)
+    6     8    node_ms           (u64 little-endian)
+   14     2    payload_len       (u16 little-endian)
+   16     N    payload           (N = payload_len bytes)
+ 16+N     4    crc32             (IEEE 802.3, little-endian)
+```
+
+The whole packet (`20 + N` bytes) is COBS-framed and terminated with `0x00`.
+COBS guarantees the encoded bytes contain no zeros, so the delimiter is
+unambiguous on the wire.
+
+The `kind` byte is intentionally not an enum — callers define their own
+taxonomy. The protocol is opinionated about transport (versioned, sequenced,
+timestamped, integrity-checked, self-delimited) and unopinionated about
+payload semantics.
+
+## Status
+
+`v0.1.0` — initial release. 15 unit tests cover roundtrip across payload
+sizes 0–1024, all error paths (truncation, version mismatch, CRC corruption,
+length mismatch, oversized payloads, undersized buffers), and a fixed
+byte-layout fixture so silent wire-format drift is impossible.
+
+Minimum Zig version: `0.15.0`. Tested on Zig `0.16.0`.
+
+## Install
+
+Add to `build.zig.zon`:
+
+```zig
+.dependencies = .{
+    .frame_protocol = .{
+        .url = "https://example.invalid/zig-frame-protocol-v0.1.0.tar.gz",
+        .hash = "...",
+    },
+},
+```
+
+In `build.zig`:
+
+```zig
+const fp = b.dependency("frame_protocol", .{
+    .target = target,
+    .optimize = optimize,
+});
+exe.root_module.addImport("frame_protocol", fp.module("frame_protocol"));
+```
+
+## Quickstart
+
+```zig
+const std = @import("std");
+const fp = @import("frame_protocol");
+
+pub fn main() !void {
+    const payload = "hello world";
+
+    var scratch: [fp.packetLen(payload.len)]u8 = undefined;
+    var wire: [fp.maxEncodedLen(payload.len)]u8 = undefined;
+
+    const wire_len = try fp.encode(
+        &wire,
+        &scratch,
+        0x42,              // kind (caller-defined)
+        100,               // sequence
+        1_715_000_000_000, // node_ms
+        payload,
+    );
+    std.debug.print("wire: {} bytes\n", .{wire_len});
+
+    // ... transmit wire[0..wire_len] ...
+
+    var dec_scratch: [fp.maxEncodedLen(payload.len)]u8 = undefined;
+    const frame = try fp.decode(wire[0..wire_len], &dec_scratch);
+
+    std.debug.assert(frame.kind == 0x42);
+    std.debug.assert(frame.sequence == 100);
+    std.debug.assert(std.mem.eql(u8, payload, frame.payload));
+}
+```
+
+## API
+
+### Constants
+
+```zig
+pub const version: u8 = 1;
+pub const header_len: usize = 16;
+pub const crc_len: usize = 4;
+pub const overhead_len: usize = 20;
+pub const max_payload_len: usize = 1024;
+pub const delimiter: u8 = 0;
+```
+
+### Sizing helpers
+
+```zig
+pub fn packetLen(payload_len: usize) usize;
+pub fn maxEncodedLen(payload_len: usize) usize;
+```
+
+### High-level
+
+```zig
+pub fn encode(
+    out: []u8,
+    scratch: []u8,
+    kind: u8,
+    sequence: u32,
+    node_ms: u64,
+    payload: []const u8,
+) Error!usize;
+
+pub fn decode(wire: []const u8, scratch: []u8) Error!Frame;
+```
+
+### Low-level (no scratch coupling)
+
+```zig
+pub fn buildPacket(
+    out: []u8,
+    kind: u8,
+    sequence: u32,
+    node_ms: u64,
+    payload: []const u8,
+) Error!usize;
+
+pub fn encodePacket(out: []u8, packet: []const u8) Error!usize;
+pub fn parsePacket(packet: []const u8) Error!Frame;
+```
+
+### Types
+
+```zig
+pub const Frame = struct {
+    kind: u8,
+    sequence: u32,
+    node_ms: u64,
+    payload: []const u8,
+};
+
+pub const Error = error{
+    PayloadTooLarge,
+    BufferTooSmall,
+    Truncated,
+    InvalidEncoding,
+    UnsupportedVersion,
+    PayloadLengthMismatch,
+    ChecksumMismatch,
+};
+```
+
+## Design notes
+
+**Why a separate library.** The frame protocol is independent of any single
+application's `kind` taxonomy. By taking `kind` as a `u8` and leaving the
+enum to the caller, the library composes naturally with any project's
+message dictionary. Multiple projects depending on this library does **not**
+require them to share kind values.
+
+**Why COBS as a dependency.** Self-delimiting frames need an unambiguous
+delimiter byte. COBS is the standard choice for "any byte stream, never
+contains a 0, ~0.4% worst-case overhead." See `zig-cobs` for details.
+
+**Why CRC32 and not stronger.** IEEE 802.3 CRC32 catches all 1–3 bit errors,
+all odd-bit-count errors, and all burst errors up to 32 bits long, with a
+miss rate of ~2.3 × 10⁻¹⁰ on random corruption. For embedded sensor links
+or short-haul host streams this is sufficient. Authenticated cryptographic
+integrity is out of scope — wrap this protocol with HMAC or AEAD at a
+higher layer if you need it.
+
+**Bounded payload size.** The encode convenience uses caller-provided
+scratch, so the practical max payload is whatever the caller chooses to
+allocate. The `max_payload_len = 1024` constant exists as a guard against
+the u16 length field overflow (real max would be 65535) and is set
+conservatively for embedded use. Larger payloads are supported by
+constructing packets directly via `buildPacket` / `encodePacket` if you
+prefer to manage the upper bound yourself.
+
+## Tests
+
+```sh
+zig build test
+```
+
+15 tests covering:
+
+- `packetLen` / `maxEncodedLen` size math
+- Empty-payload roundtrip
+- ASCII payload with embedded zeros (verifies COBS escaping works end-to-end)
+- Maximum payload roundtrip
+- Property-based roundtrip across all payload sizes 0–1024 with
+  pseudo-random data
+- Oversized-payload rejection
+- Undersized-scratch and undersized-output rejection
+- Empty wire and lone-delimiter rejection
+- Decode without trailing delimiter (transport optionality)
+- Unsupported-version rejection
+- CRC-mismatch detection
+- Payload-length-field-mismatch detection
+- **Byte-fixture test** that pins the exact wire format — any future change
+  to header layout will fail this test loudly.
+
+## License
+
+MIT. See `LICENSE`.
+
+## Contributing
+
+Issues and PRs welcome. Changes that alter the wire format are breaking and
+require a version bump. The fixture test in `src/root.zig` is the canonical
+specification of v1.
