@@ -235,6 +235,51 @@ robustness, truncation, and random-wire never-panic guarantees:
 - **Payload-length-field tampering** — must return
   `PayloadLengthMismatch` or `ChecksumMismatch`, never panic
 
+## Benchmarks
+
+```sh
+zig build bench
+```
+
+Three benchmarks ship under `bench/`:
+
+- `bench_encode.zig` — full encode pipeline (header build + CRC32 + COBS
+  framing) at 16 B / 256 B / 1 KiB payloads
+- `bench_decode.zig` — full decode pipeline (COBS decode + header parse +
+  CRC32 verify) at the same matrix
+- `bench_roundtrip.zig` — end-to-end encode→decode at a 256 B payload, with
+  packets-per-second reported
+
+Each benchmark warms up for 1 000 iterations, then measures with enough
+iterations (2 M for 16 B, scaled down for larger sizes) to dampen variance
+across roughly one second of wall time. Output is parseable `key=value`
+lines so external collectors can scrape them. Timing uses
+`std.os.linux.clock_gettime(.MONOTONIC, &ts)` directly — `std.time.Timer` and
+`std.time.nanoTimestamp` were removed in Zig 0.16's stdlib reshuffle.
+
+Representative numbers on the maintainer's workstation
+(Intel Core i7-1065G7 @ 1.30 GHz, Linux 7.0.3-arch1-1 x86_64, Zig 0.16.0,
+`zig build bench` with `-Doptimize=ReleaseFast`). Throughput is in *payload*
+bytes/sec; the actual wire frame is larger by the 20-byte header+CRC plus
+~0.4% COBS overhead:
+
+| Bench       | Payload | ns/op  | MB/s | pkts/s        |
+| ----------- | ------- | ------ | ---- | ------------- |
+| encode      | 16 B    | 411    |   38 |               |
+| encode      | 256 B   | 3 412  |   75 |               |
+| encode      | 1 KiB   | 13 618 |   75 |               |
+| decode      | 16 B    | 522    |   30 |               |
+| decode      | 256 B   | 5 068  |   50 |               |
+| decode      | 1 KiB   | 16 799 |   60 |               |
+| roundtrip   | 256 B   | 15 507 |   16 |    64 483     |
+
+The throughput is dominated by the CRC32 pass over header + payload; this
+build uses `std.hash.Crc32` (table-based, no SSE4.2 CRC32 intrinsic). A
+slice-by-8 or `_mm_crc32` variant would close most of the gap to memcpy
+speed; that's deferred until a caller actually needs it.
+
+These numbers are on my workstation; bring your own data.
+
 ## License
 
 MIT. See `LICENSE`.
