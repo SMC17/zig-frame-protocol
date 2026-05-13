@@ -13,8 +13,8 @@
     },
     .dependencies = .{
         .cobs = .{
-            .url = "https://github.com/SMC17/zig-cobs/archive/refs/heads/main.tar.gz",
-            .hash = "cobs-0.1.0-W726pPo-AAAeKUKbAuIRyaRKPLVT-mCw9fioLbzoCWiY",
+            .url = "https://github.com/SMC17/zig-cobs/archive/refs/tags/v0.1.0.tar.gz",
+            .hash = "cobs-0.1.0-W726pEdBAAC4M2CPYUgnF3pML7NlAye9YxGnh1XBdiDX",
         },
     },
 }

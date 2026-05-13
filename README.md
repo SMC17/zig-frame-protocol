@@ -8,7 +8,7 @@ delimited by a single `0x00` byte for unambiguous stream parsing.
 Built on top of [`zig-cobs`][zig-cobs]. Zero allocation, no dependencies
 beyond cobs, suitable for embedded targets and host-side stream processing.
 
-[zig-cobs]: https://example.invalid/zig-cobs
+[zig-cobs]: https://github.com/SMC17/zig-cobs
 
 ## Wire format
 
@@ -49,7 +49,7 @@ Add to `build.zig.zon`:
 ```zig
 .dependencies = .{
     .frame_protocol = .{
-        .url = "https://example.invalid/zig-frame-protocol-v0.1.0.tar.gz",
+        .url = "https://github.com/SMC17/zig-frame-protocol/archive/refs/tags/v0.1.0.tar.gz",
         .hash = "...",
     },
 },
