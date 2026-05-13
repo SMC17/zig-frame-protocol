@@ -1,0 +1,20 @@
+.{
+    .name = .frame_protocol,
+    .version = "0.1.0",
+    .fingerprint = 0x607cad79ecf7a4f3,
+    .minimum_zig_version = "0.15.0",
+    .paths = .{
+        "src",
+        "build.zig",
+        "build.zig.zon",
+        "README.md",
+        "CHANGELOG.md",
+        "LICENSE",
+    },
+    .dependencies = .{
+        .cobs = .{
+            .url = "https://github.com/SMC17/zig-cobs/archive/refs/heads/main.tar.gz",
+            .hash = "cobs-0.1.0-W726pPo-AAAeKUKbAuIRyaRKPLVT-mCw9fioLbzoCWiY",
+        },
+    },
+}
