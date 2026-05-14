@@ -1,5 +1,7 @@
 # zig-frame-protocol
 
+[![CI](https://github.com/SMC17/zig-frame-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/SMC17/zig-frame-protocol/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/SMC17/zig-frame-protocol?display_name=tag&sort=semver)](https://github.com/SMC17/zig-frame-protocol/releases) [![License](https://img.shields.io/github/license/SMC17/zig-frame-protocol)](LICENSE)
+
 A small, versioned binary frame protocol for byte streams. Each frame carries
 a kind byte, a 32-bit sequence number, a 64-bit timestamp, a 16-bit payload
 length, the payload itself, and a CRC32 trailer — then is COBS-framed and
