@@ -1,3 +1,12 @@
+## v1.0.0 — 2026-05-13
+
+**Production-grade hygiene milestone.**
+
+- Added SECURITY.md (coordinated disclosure policy).
+- Verified LICENSE, README, CONTRIBUTING, CODE_OF_CONDUCT, CI workflow all in place and accurate.
+- API surface declared stable for the v1.x cycle. Breaking changes will bump to v2.x.
+- Engineering posture: Virgil work-in-progress convention adapted for OSS — v1.0 means we stand behind the existing surface; v1.x patches refine implementation without breaking the API.
+
 # Changelog
 
 All notable changes to `zig-frame-protocol` are documented in this file.
