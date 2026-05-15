@@ -1,3 +1,19 @@
+## Unreleased
+
+### Added
+- Documentation tests (`zig build doctest`, backed by `tools/doctest.sh`).
+  Vendors the README Quickstart block into `examples/quickstart.zig` and
+  diff-checks the two on every invocation, so drift between README and
+  executable source fails CI. Also asserts the quickstart binary prints
+  the documented `wire: N bytes` line on stdout, and verifies the
+  documented build steps (`test`, `bench`, `example-echo`) actually exist
+  in `zig build --help`. First-pass discipline: one code block locked in,
+  five checks total. The README and the vendored example agreed on first
+  run — no drift to report. Follow-ups can tighten the doc-test surface
+  to cover the wire-format table, API signature blocks, and bench output
+  format.
+- `zig build example-quickstart` — runs the vendored README Quickstart.
+
 ## v1.0.0 — 2026-05-13
 
 **Production-grade hygiene milestone.**
