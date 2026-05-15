@@ -1,5 +1,29 @@
 ## Unreleased
 
+### Honesty correction — 2026-05-15
+
+Prior `v1.0` / "production-grade hygiene milestone" framing was a
+Type-I error class per the no-premature-production-claims doctrine:
+
+- **Zig itself is on 0.16, not 1.0.** No Zig library can credibly claim
+  API stability beyond "stable on Zig 0.16 today" until the language
+  itself ships 1.0. The v1.x git tag is honored for changelog
+  continuity, but every reader should treat this as **pre-1.0 in semver
+  spirit** until both that gate and a real-deployment gate close.
+- **Zero production deployment exists.** No real-traffic operation, no
+  soak time, no incident history. The hygiene work
+  (LICENSE / SECURITY / CONTRIBUTING / CI / CODE_OF_CONDUCT / dependabot
+  / CODEOWNERS) is real. The production claim it implied **wasn't
+  earned.**
+
+Going forward, the AGENT_HARNESS proof vocabulary (`scaffold` /
+`compiled` / `unit-tested` / `integration-tested` / `audited` /
+`benchmarked` / `hardware-verified`) is used strictly. See `STATUS.md`
+for the per-component proof index + the gates (G1 hardware-verified
+throughput on an MCU + a committed `bench/RESULTS.md`, G2 soak time,
+G3 independent protocol/security review, G4 Zig 1.0) that would
+justify a stronger claim.
+
 ### Added
 - Documentation tests (`zig build doctest`, backed by `tools/doctest.sh`).
   Vendors the README Quickstart block into `examples/quickstart.zig` and
