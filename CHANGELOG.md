@@ -1,3 +1,68 @@
+## [0.2.0] — 2026-05-18
+
+### Added
+- **Line coverage measurement: 100% on `src/root.zig`** (48/48 lines).
+  Adopts the zig-cobs v1.2.0 coverage-driver pattern:
+  - `examples/coverage_driver.zig` — single-binary executable that
+    exercises every public function (`packetLen`, `maxEncodedLen`,
+    `buildPacket`, `encodePacket`, `encode`, `parsePacket`, `decode`)
+    and every public error variant (`PayloadTooLarge`, `BufferTooSmall`,
+    `Truncated`, `InvalidEncoding`, `ChecksumMismatch`,
+    `UnsupportedVersion`).
+  - `tools/coverage.sh` — wrapper that builds the driver in Debug,
+    runs `kcov --include-pattern=root.zig` against it, prints the
+    line %, and fails if coverage drops below 80%.
+  - `.github/workflows/ci.yml` — `line-coverage (kcov)` job runs on
+    every push and uploads the kcov HTML report as an artifact.
+- README evidence vocabulary now names `coverage-measured` (48/48).
+
+### Rationale (toolchain)
+- The Zig 0.16 test runner's debug-info layout does not surface
+  line-coverage to kcov through the nixpkgs build (compiled without
+  libbfd-dev). A plain executable has standard ELF+DWARF and kcov
+  captures it cleanly. Driver runs same assertions as the test suite,
+  in a form kcov can introspect.
+
+## Unreleased
+
+### Honesty correction — 2026-05-15
+
+Prior `v1.0` / "production-grade hygiene milestone" framing was a
+Type-I error class per the no-premature-production-claims doctrine:
+
+- **Zig itself is on 0.16, not 1.0.** No Zig library can credibly claim
+  API stability beyond "stable on Zig 0.16 today" until the language
+  itself ships 1.0. The v1.x git tag is honored for changelog
+  continuity, but every reader should treat this as **pre-1.0 in semver
+  spirit** until both that gate and a real-deployment gate close.
+- **Zero production deployment exists.** No real-traffic operation, no
+  soak time, no incident history. The hygiene work
+  (LICENSE / SECURITY / CONTRIBUTING / CI / CODE_OF_CONDUCT / dependabot
+  / CODEOWNERS) is real. The production claim it implied **wasn't
+  earned.**
+
+Going forward, the AGENT_HARNESS proof vocabulary (`scaffold` /
+`compiled` / `unit-tested` / `integration-tested` / `audited` /
+`benchmarked` / `hardware-verified`) is used strictly. See `STATUS.md`
+for the per-component proof index + the gates (G1 hardware-verified
+throughput on an MCU + a committed `bench/RESULTS.md`, G2 soak time,
+G3 independent protocol/security review, G4 Zig 1.0) that would
+justify a stronger claim.
+
+### Added
+- Documentation tests (`zig build doctest`, backed by `tools/doctest.sh`).
+  Vendors the README Quickstart block into `examples/quickstart.zig` and
+  diff-checks the two on every invocation, so drift between README and
+  executable source fails CI. Also asserts the quickstart binary prints
+  the documented `wire: N bytes` line on stdout, and verifies the
+  documented build steps (`test`, `bench`, `example-echo`) actually exist
+  in `zig build --help`. First-pass discipline: one code block locked in,
+  five checks total. The README and the vendored example agreed on first
+  run — no drift to report. Follow-ups can tighten the doc-test surface
+  to cover the wire-format table, API signature blocks, and bench output
+  format.
+- `zig build example-quickstart` — runs the vendored README Quickstart.
+
 ## v1.0.0 — 2026-05-13
 
 **Production-grade hygiene milestone.**

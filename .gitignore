@@ -8,3 +8,4 @@ zig-out/
 *.so
 *.dylib
 *.dll
+coverage-out/
