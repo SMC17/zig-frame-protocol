@@ -33,10 +33,19 @@ fi
 rm -rf "$OUT_DIR"
 kcov --include-pattern=root.zig "$OUT_DIR" ./zig-out/bin/coverage-driver
 
-# Surface the line coverage percentage to stdout in a CI-greppable form.
-pct=$(jq -r '.percent_covered' "$OUT_DIR/coverage-driver/coverage.json")
-covered=$(jq -r '.covered_lines' "$OUT_DIR/coverage-driver/coverage.json")
-total=$(jq -r '.total_lines' "$OUT_DIR/coverage-driver/coverage.json")
+# Locate coverage.json — older kcov (Ubuntu 22.04 ships v38) writes only
+# the per-run hashed subdir; newer kcov (NixOS v43) also writes the
+# canonical `<exe-name>/coverage.json`. Find whichever exists.
+report=$(find "$OUT_DIR" -name coverage.json -type f | sort | head -1)
+if [[ -z "$report" ]]; then
+    echo "tools/coverage.sh: kcov produced no coverage.json under $OUT_DIR" >&2
+    find "$OUT_DIR" -type f 2>/dev/null | head -10 >&2
+    exit 2
+fi
+
+pct=$(jq -r '.percent_covered' "$report")
+covered=$(jq -r '.covered_lines' "$report")
+total=$(jq -r '.total_lines' "$report")
 
 echo
 echo "src/root.zig line coverage: $pct% ($covered/$total)"
