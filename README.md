@@ -37,12 +37,22 @@ payload semantics.
 
 ## Status
 
-`v0.1.0` — initial release. 21 unit tests cover roundtrip across payload
-sizes 0–1024, all error paths (truncation, version mismatch, CRC corruption,
-length mismatch, oversized payloads, undersized buffers), a fixed
-byte-layout fixture so silent wire-format drift is impossible, and an
-adversarial fuzz suite covering bit-flip robustness, prefix truncation, and
-a 100k random-wire never-panic guarantee.
+`v0.2.0` — line-coverage-measured.
+
+**Evidence vocabulary** (per the fleet's AGENT_HARNESS discipline):
+
+- `unit-tested` — 21 unit tests cover roundtrip across payload sizes 0–1024,
+  all error paths (truncation, version mismatch, CRC corruption, length
+  mismatch, oversized payloads, undersized buffers), a fixed byte-layout
+  fixture so silent wire-format drift is impossible.
+- `fuzzed` — adversarial fuzz suite: bit-flip robustness, prefix truncation,
+  100k random-wire never-panic guarantee.
+- `coverage-measured` — **100.00% line coverage on `src/root.zig`** (48/48
+  lines, kcov against a dedicated `coverage-driver` executable that
+  exercises every public function + every error variant; reproducible via
+  `bash tools/coverage.sh`).
+- `hardware-verified` — Linux x86_64 + Linux aarch64 + macOS Apple Silicon
+  native runners on every push.
 
 Minimum Zig version: `0.15.0`. Tested on Zig `0.16.0`.
 

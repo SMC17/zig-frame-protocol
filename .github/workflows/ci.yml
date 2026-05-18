@@ -58,3 +58,29 @@ jobs:
 
       - name: zig build -Dtarget=${{ matrix.target }}
         run: zig build -Dtarget=${{ matrix.target }}
+
+  coverage:
+    name: line-coverage (kcov)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install Zig 0.16.0
+        uses: mlugg/setup-zig@v2
+        with:
+          version: "0.16.0"
+
+      - name: Install kcov + jq
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y kcov jq
+
+      - name: Measure line coverage of src/root.zig
+        run: bash tools/coverage.sh
+
+      - name: Upload coverage HTML
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: coverage-html
+          path: coverage-out/coverage-driver/
