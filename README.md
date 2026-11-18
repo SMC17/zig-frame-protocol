@@ -1,5 +1,7 @@
 # zig-frame-protocol
 
+**[Status](STATUS.md) · [Roadmap](ROADMAP.md) · [Contributing](CONTRIBUTING.md) · [Issues](https://github.com/SMC17/zig-frame-protocol/issues) · [Public roadmap](https://github.com/users/SMC17/projects/16)**
+
 [![CI](https://github.com/SMC17/zig-frame-protocol/actions/workflows/ci.yml/badge.svg)](https://github.com/SMC17/zig-frame-protocol/actions/workflows/ci.yml) [![Release](https://img.shields.io/github/v/release/SMC17/zig-frame-protocol?display_name=tag&sort=semver)](https://github.com/SMC17/zig-frame-protocol/releases) [![License](https://img.shields.io/github/license/SMC17/zig-frame-protocol)](LICENSE)
 
 A small, versioned binary frame protocol for byte streams. Each frame carries
